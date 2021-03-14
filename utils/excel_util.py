@@ -3,7 +3,7 @@ import xlrd
 import xlwt
 import sys
 import logging
-
+from openpyxl import Workbook
 import tkinter as tk
 from tkinter import ttk
 import tkinter.messagebox
@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("excel_test")
 
 
-class ExcelUtil:
+class ExcelReadUtil:
     def __init__(self, filename, sheet_index=0, is_has_title=True):
         """
         excel文件对象，类克返回每一列数据，可选择类型：(int float string)
@@ -57,9 +57,57 @@ class ExcelUtil:
             logger.error("转换int 类型失败！ e:{}".format(e))
 
 
+class ExcelWriteUtil(object):
+    @classmethod
+    def write_excel(cls, filename, data, sheet_name="sheet0", title=None):
+        """
+        写excel文件
+        :param filename:  文件名，可以是全路径
+        :param title: 标题行（第一行）,没有填 None
+        :param data: 数据，二维列表
+        """
+        save_excel = xlwt.Workbook()
+        out_sheet = save_excel.add_sheet(sheet_name, cell_overwrite_ok=True)  # 创建sheet
+        col_num = len(data)
+        row_num = len(data[0])
+        # 保证列数相同
+        if title is not None:
+            assert len(title) == len(data)
+        for i in range(col_num):
+            if title is None:
+                break
+            out_sheet.write(0, i, title[i])
+        for row in range(row_num):
+            for col in range(col_num):
+                out_sheet.write(row, col, data[col][row])
+        save_excel.save(filename)
+
+    @classmethod
+    def write_excel2(cls, filename, data, sheet_name="sheet0", title=None):
+        """
+        写excel文件
+        :param filename:  文件名，可以是全路径
+        :param title: 标题行（第一行）,没有填 None
+        :param data: 数据，二维列表
+        """
+        wb = Workbook()
+        ws = wb.active
+        wb.active.title = sheet_name
+        col_num = len(data)
+        row_num = len(data[0])
+        if title is not None:
+            assert len(title) == len(data)
+            ws.append(title)
+        for row in range(row_num):
+            temp_row = []
+            for col in range(col_num):
+                temp_row.append(data[col][row])
+            ws.append(temp_row)
+        wb.save(filename)
 
 # if __name__ == "__main__":
-#     filename = "a.xlsx"
-#     excel_list = ExcelUtil(filename)
-#     logger.info(excel_list.title)
-#     logger.info(excel_list.data[3])
+#      filename = "a.xlsx"
+#      excel_list = ExcelReadUtil(filename)
+#      logger.info(excel_list.title)
+#      # logger.info(excel_list.data[3])
+#      ExcelWriteUtil.write_excel2("save.xlsx", excel_list.data,"sheet",excel_list.title)
